@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2020. Tobias Rempe
+ * This File, its contents and by extention the corresponding project is property of Tobias Rempe and may not be used without explicit permission to do so.
+ *
+ * tobiasrempe@zyonicsoftware.com
+ */
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.2.4.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+}
+
+group 'de.azraanimating'
+version 'V0.1.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation group: 'org.zeromq', name: 'jeromq', version: '0.4.0'
+    implementation 'com.github.Daschi1:JavaMySQLAPI:v1.0.5a'
+    implementation("com.squareup.okhttp3:okhttp:4.8.1")
+    compile(group: 'com.github.Carleslc', name: 'Simple-YAML', version: '1.6.1')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    baseName("EDMRPFilter")
+    version(project.version)
+
+
+    /*from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")*/
+
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+
+    manifest {
+        attributes["Implimentation-Title"] = project.name
+        attributes["Main-Class"] = "de.azraanimating.edmrpfilter.startup.Initializer"
+    }
+}
