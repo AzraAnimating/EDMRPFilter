@@ -12,10 +12,17 @@ import de.daschi.core.MySQL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class MySQLHandler {
 
     private MySQL mySQL;
+    private List<String> searchedRessources;
+
+    public void setSearchedRessources(final List<String> searchedRessources) {
+        this.searchedRessources = searchedRessources;
+    }
 
     public MySQL connectToMysql(final String hostname, final int port, final String database, final String user, final String password) {
         final MySQL mySQL = new MySQL(hostname, port, user, password, database);
@@ -26,7 +33,7 @@ public class MySQLHandler {
         return mySQL;
     }
 
-    public void addStation(String stationname, String systemname, final String coordinates, final String data, final String timestamp) {
+    public void addStation(String stationname, String systemname, final String coordinates, final String data, final String timestamp, final String[] ressources) {
         if (stationname.contains("'")) {
             stationname = stationname.replace("'", "");
         }
@@ -35,20 +42,10 @@ public class MySQLHandler {
         }
         try {
             this.mySQL.executeUpdate("INSERT INTO Ressources(stationname,systemname,coordinates,ressourcedata,timestamp) VALUES ('" + stationname + "','" + systemname + "','" + coordinates + "','" + data + "','" + timestamp + "');");
-        } catch (final SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void addStation(String stationname, String systemname, final String data, final String timestamp) {
-        if (stationname.contains("'")) {
-            stationname = stationname.replace("'", "");
-        }
-        if (systemname.contains("'")) {
-            systemname = systemname.replace("'", "");
-        }
-        try {
-            this.mySQL.executeUpdate("INSERT INTO Ressources(stationname,systemname,coordinates,ressourcedata,timestamp) VALUES ('" + stationname + "','" + systemname + "','" + "NODATA" + "','" + data + "','" + timestamp + "');");
+            this.mySQL.executeUpdate("INSERT INTO Station_Ressources(stationname) VALUES ('" + stationname + "');");
+            for (int i = 0; i < ressources.length; i++) {
+                this.setStationRessourcePrice(ressources[i].split("-")[0], Integer.parseInt(ressources[i].split("-")[1]), stationname);
+            }
         } catch (final SQLException e) {
             e.printStackTrace();
         }
@@ -139,9 +136,12 @@ public class MySQLHandler {
         return null;
     }
 
-    public void setSystemName(final String data, String stationName) {
+    public void setSystemName(String data, String stationName) {
         if (stationName.contains("'")) {
             stationName = stationName.replace("'", "");
+        }
+        if (data.contains("'")) {
+            data = data.replace("'", "--");
         }
         try {
             this.mySQL.executeUpdate("UPDATE Ressources SET systemname = '" + data + "' WHERE stationname = '" + stationName + "';");
@@ -149,6 +149,53 @@ public class MySQLHandler {
             e.printStackTrace();
         }
     }
+
+    public void setStationRessourcePrice(final String ressource, final int sellPrice, String stationName) {
+        if (stationName.contains("'")) {
+            stationName = stationName.replace("'", "");
+        }
+        try {
+            this.mySQL.executeUpdate("UPDATE Station_Ressources SET " + ressource + " = " + sellPrice + " WHERE stationname = '" + stationName + "';");
+        } catch (final SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getStationRessourcePrice(String stationName, final String ressource) {
+        if (stationName.contains("'")) {
+            stationName = stationName.replace("'", "");
+        }
+        stationName = this.mySQL.removeSQLInjectionPossibility(stationName);
+        try {
+            final ResultSet resultSet = this.mySQL.executeQuery("SELECT " + ressource + " FROM Station_Ressources WHERE stationname = '" + stationName + "';");
+            resultSet.next();
+            return resultSet.getInt(ressource);
+        } catch (final Exception e) {
+        }
+        return 0;
+    }
+
+    public ArrayList<String> getStationsSellingRessource(String ressource) {
+        if (ressource.contains("'")) {
+            ressource = ressource.replace("'", "");
+        }
+        if (this.searchedRessources.contains(ressource)) {
+            ressource = this.mySQL.removeSQLInjectionPossibility(ressource);
+            final ArrayList<String> stations = new ArrayList<>();
+            final ArrayList<String> stationSystems = new ArrayList<>();
+            try {
+                final ResultSet resultSet = this.mySQL.executeQuery("SELECT * FROM Station_Ressources WHERE " + ressource + " IS NOT NULL;");
+                while (resultSet.next()) {
+                    stations.add(resultSet.getString("stationName").replace("--", "'"));
+                }
+                return stations;
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
 
     public ArrayList<String> getAllStationsInSystem(String systemName) {
         if (systemName.contains("'")) {
@@ -177,6 +224,21 @@ public class MySQLHandler {
                     systems.add(resultSet.getString("systemname"));
                 }
             }
+            return systems;
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public HashMap<String, String> getAllStationsWithSystems() {
+        final HashMap<String, String> systems = new HashMap<>();
+        try {
+            final ResultSet resultSet = this.mySQL.executeQuery("SELECT systemname, stationname FROM Ressources;");
+            while (resultSet.next()) {
+                systems.put(resultSet.getString("stationname").toLowerCase(), resultSet.getString("systemname"));
+            }
+            System.out.println(systems.size());
             return systems;
         } catch (final Exception e) {
             e.printStackTrace();

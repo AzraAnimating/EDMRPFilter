@@ -69,4 +69,7 @@ public class Detective {
         this.searchedMaterials = Arrays.asList(searchedMaterials.split(";"));
     }
 
+    public List<String> getSearchedMaterials() {
+        return this.searchedMaterials;
+    }
 }

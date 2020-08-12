@@ -7,6 +7,7 @@
 
 package de.azraanimating.edmrpfilter.restapi;
 
+import de.azraanimating.edmrpfilter.util.CacheManager;
 import de.azraanimating.edmrpfilter.util.MySQLHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +22,9 @@ import java.util.ArrayList;
 public class RestApiController {
 
     public static MySQLHandler mySQLHandler;
+    public static CacheManager cacheManager;
 
-    @GetMapping("/edmrp/stations/")
+    @GetMapping("/edmrp/systemdata/")
     @ResponseBody
     public ResponseEntity<String> getStationsInSystem(@RequestParam final String system) {
 
@@ -30,7 +32,7 @@ public class RestApiController {
 
         final StringBuilder replyStringBuilder = new StringBuilder();
 
-        replyStringBuilder.append("{\"stations\":").append(stations.toString()).append("}");
+        replyStringBuilder.append("{\"stations\":").append(stations.toString()).append(",\"coordinates\":").append(RestApiController.mySQLHandler.getSystemCoordinates(system)).append("}");
 
         return ResponseEntity.status(HttpStatus.OK).body(replyStringBuilder.toString());
 
@@ -38,7 +40,7 @@ public class RestApiController {
 
     @GetMapping("/edmrp/ressources/")
     @ResponseBody
-    public ResponseEntity<String> getRessourcesAtStation(@RequestParam final String station) {
+    public ResponseEntity<String> getAllStations(@RequestParam final String station) {
 
         return ResponseEntity.status(HttpStatus.OK).body("{\"ressources\":" + RestApiController.mySQLHandler.getStationData(station) + "}");
 
@@ -46,17 +48,46 @@ public class RestApiController {
 
     @GetMapping("/edmrp/allsystems/")
     @ResponseBody
-    public ResponseEntity<String> getRessourcesAtStation() {
+    public ResponseEntity<String> getAllStations() {
 
-        return ResponseEntity.status(HttpStatus.OK).body("{\"systems\":" + RestApiController.mySQLHandler.getAllIndexedSystems() + "}");
+        return ResponseEntity.status(HttpStatus.OK).body("{\"systems\":" + RestApiController.cacheManager.getSystems() + "}");
 
     }
 
     @GetMapping("/edmrp/coordinates/")
     @ResponseBody
-    public ResponseEntity<String> getCoordinates(final String system) {
+    public ResponseEntity<String> getCoordinates(@RequestParam final String system) {
 
         return ResponseEntity.status(HttpStatus.OK).body("{\"coordinates\":" + RestApiController.mySQLHandler.getSystemCoordinates(system) + "}");
+
+    }
+
+    @GetMapping("/edmrp/ressourcestations/")
+    @ResponseBody
+    public ResponseEntity<String> getStationsSellingRessources(@RequestParam final String ressource) {
+
+        final ArrayList<String> sellers = RestApiController.mySQLHandler.getStationsSellingRessource(ressource);
+        final ArrayList<String> stationsWithSystems = new ArrayList<>();
+
+        sellers.forEach(stationName -> {
+            String systemName = RestApiController.cacheManager.getSystemForStation(stationName);
+            if (systemName == null) {
+                systemName = RestApiController.mySQLHandler.getSystemName(stationName);
+                RestApiController.cacheManager.addSystemWithStationToCache(stationName, systemName);
+            }
+            stationsWithSystems.add(systemName + "#" + stationName);
+        });
+
+
+        return ResponseEntity.status(HttpStatus.OK).body("{\"stations\":" + stationsWithSystems.toString() + "}");
+
+    }
+
+    @GetMapping("/edmrp/system/")
+    @ResponseBody
+    public ResponseEntity<String> getSystemFromStation(@RequestParam final String station) {
+
+        return ResponseEntity.status(HttpStatus.OK).body("{\"system\":" + RestApiController.cacheManager.getSystemForStation(station) + "}");
 
     }
 

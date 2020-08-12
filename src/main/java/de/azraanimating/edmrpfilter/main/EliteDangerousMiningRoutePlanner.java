@@ -29,6 +29,7 @@ public class EliteDangerousMiningRoutePlanner {
 
         final ConfigReader configReader = new ConfigReader();
         configReader.readConfig();
+
         this.mySQLHandler.connectToMysql(configReader.getHostname(), configReader.getPort(), configReader.getDatabase(), configReader.getUser(), configReader.getPassword());
 
         this.cacheManager = new CacheManager();
@@ -37,10 +38,16 @@ public class EliteDangerousMiningRoutePlanner {
 
         configReader.readRessources(this);
 
+        this.mySQLHandler.setSearchedRessources(this.detective.getSearchedMaterials());
+
         final Application application = new Application();
         application.startSpring(configReader.getApiport());
 
         RestApiController.mySQLHandler = this.mySQLHandler;
+        RestApiController.cacheManager = this.cacheManager;
+
+        this.cacheManager.loadSystemsIntoCache();
+        this.cacheManager.loadStationsWithSystemsIntoCache();
 
         final EddnReader eddnReader = new EddnReader(this.detective);
         eddnReader.readStream();
@@ -57,4 +64,6 @@ public class EliteDangerousMiningRoutePlanner {
     public MySQLHandler getMySQLHandler() {
         return this.mySQLHandler;
     }
+
+
 }

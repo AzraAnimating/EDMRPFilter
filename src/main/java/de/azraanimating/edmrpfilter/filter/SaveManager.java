@@ -42,27 +42,72 @@ public class SaveManager {
                         System.out.println("Refreshed System Data for Fleetcarrier '" + stationName + "'");
                     }
                 }
+                if (!this.cacheManager.isSystemChached(systemName)) {
+                    this.cacheManager.addSystemToCache(systemName);
+                }
+
+                data.forEach(jsonObject -> {
+                    try {
+                        this.mySQLHandler.setStationRessourcePrice(jsonObject.getString("name"), jsonObject.getInt("sellPrice"), stationName);
+                    } catch (final JSONException e) {
+                        e.printStackTrace();
+                    }
+                });
+                this.cacheManager.addSystemWithStationToCache(stationName, systemName);
                 System.out.println("Updated Data for '" + stationName + "' in '" + systemName + "' in Cache & Database");
             }
+            this.cacheManager.addSystemWithStationToCache(stationName, systemName);
         } else {
             final String stationData = this.mySQLHandler.getStationData(stationName);
+            
+            this.cacheManager.addSystemWithStationToCache(stationName, systemName);
 
             if (stationData == null) {
-                this.mySQLHandler.addStation(stationName, systemName, this.getSystemCoordinates(systemName), data.toString(), timestamp);
-                System.out.println("Saved new Data for '" + stationName + "' in '" + systemName + "' to Database <- Indexed");
-            } else {
-                this.mySQLHandler.setStationData(data.toString(), stationName);
-                this.mySQLHandler.setTimestamp(timestamp, stationName);
-                this.cacheManager.addToCache(stationName, data);
-                if (stationName.contains("-")) {
-                    if (!this.mySQLHandler.getSystemName(stationName).equals(systemName)) {
-                        this.mySQLHandler.setSystemName(systemName, stationName);
 
-                        this.mySQLHandler.setSystemCoordinates(this.getSystemCoordinates(systemName), stationName);
-                        System.out.println("Refreshed System Data for Fleetcarrier '" + stationName + "'");
+                final ArrayList<String> materialList = new ArrayList<>();
+
+                data.forEach(jsonObject -> {
+                    try {
+                        materialList.add(jsonObject.getString("name") + "-" + jsonObject.getInt("sellPrice"));
+                    } catch (final JSONException e) {
+                        e.printStackTrace();
                     }
+                });
+
+                final String[] materials = materialList.toArray(new String[0]);
+
+                this.mySQLHandler.addStation(stationName, systemName, this.getSystemCoordinates(systemName), data.toString(), timestamp, materials);
+                this.cacheManager.addSystemWithStationToCache(stationName, systemName);
+                System.out.println("Saved new Data for '" + stationName + "' in '" + systemName + "' to Database <- Indexed");
+                if (!this.cacheManager.isSystemChached(systemName)) {
+                    this.cacheManager.addSystemToCache(systemName);
                 }
-                System.out.println("Updated Data for '" + stationName + "' in '" + systemName + "' in Cache & Database [1. Entry to Cache]");
+            } else {
+                if (!this.mySQLHandler.getStationData(stationName).equals(data.toString())) {
+                    this.mySQLHandler.setStationData(data.toString(), stationName);
+                    this.mySQLHandler.setTimestamp(timestamp, stationName);
+                    this.cacheManager.addToCache(stationName, data);
+                    if (stationName.contains("-")) {
+                        if (!this.mySQLHandler.getSystemName(stationName).equals(systemName)) {
+                            this.mySQLHandler.setSystemName(systemName, stationName);
+
+                            this.mySQLHandler.setSystemCoordinates(this.getSystemCoordinates(systemName), stationName);
+                            System.out.println("Refreshed System Data for Fleetcarrier '" + stationName + "'");
+                        }
+                    }
+                    if (!this.cacheManager.isSystemChached(systemName)) {
+                        this.cacheManager.addSystemToCache(systemName);
+                    }
+                    data.forEach(jsonObject -> {
+                        try {
+                            this.mySQLHandler.setStationRessourcePrice(jsonObject.getString("name"), jsonObject.getInt("sellPrice"), stationName);
+                        } catch (final JSONException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    this.cacheManager.addSystemWithStationToCache(stationName, systemName);
+                    System.out.println("Updated Data for '" + stationName + "' in '" + systemName + "' in Cache & Database [1. Entry to Cache]");
+                }
             }
         }
     }
