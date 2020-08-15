@@ -130,7 +130,9 @@ public class RestApiController {
                     }
                 }
             });
-            pricingWithSystems.put(namesWithHighestPrice.get(), highestPrice.get());
+            if (highestPrice.get() > 0) {
+                pricingWithSystems.put(namesWithHighestPrice.get(), highestPrice.get());
+            }
         });
 
         final ArrayList<String> sortedSystems = this.flip(this.sortIntegers(pricingWithSystems));
