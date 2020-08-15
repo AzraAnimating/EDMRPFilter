@@ -17,12 +17,14 @@ import de.azraanimating.edmrpfilter.util.MySQLHandler;
 import org.simpleyaml.exceptions.InvalidConfigurationException;
 
 import java.io.IOException;
+import java.util.List;
 
 public class EliteDangerousMiningRoutePlanner {
 
     private final Detective detective;
     private final MySQLHandler mySQLHandler;
     private final CacheManager cacheManager;
+    public static List<String> searchedMaterials;
 
     public EliteDangerousMiningRoutePlanner() throws InvalidConfigurationException, IOException {
         this.mySQLHandler = new MySQLHandler();
@@ -48,6 +50,10 @@ public class EliteDangerousMiningRoutePlanner {
 
         this.cacheManager.loadSystemsIntoCache();
         this.cacheManager.loadStationsWithSystemsIntoCache();
+        this.cacheManager.loadRessourcesWithSystemsIntoCache(this.detective.getSearchedMaterials());
+        this.cacheManager.cacheCoordinates();
+
+        EliteDangerousMiningRoutePlanner.searchedMaterials = this.detective.getSearchedMaterials();
 
         final EddnReader eddnReader = new EddnReader(this.detective);
         eddnReader.readStream();

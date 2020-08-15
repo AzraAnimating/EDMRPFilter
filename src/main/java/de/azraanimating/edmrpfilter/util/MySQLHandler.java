@@ -8,6 +8,7 @@
 package de.azraanimating.edmrpfilter.util;
 
 import de.daschi.core.MySQL;
+import org.json.JSONObject;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -238,8 +239,25 @@ public class MySQLHandler {
             while (resultSet.next()) {
                 systems.put(resultSet.getString("stationname").toLowerCase(), resultSet.getString("systemname"));
             }
-            System.out.println(systems.size());
             return systems;
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public HashMap<String, JSONObject> getCoordinates() {
+        final HashMap<String, JSONObject> coords = new HashMap<>();
+        try {
+            final ResultSet resultSet = this.mySQL.executeQuery("SELECT systemname, coordinates FROM Ressources;");
+            while (resultSet.next()) {
+                final String coordis = resultSet.getString("coordinates");
+                if (!coordis.equals("NODATA")) {
+                    coords.put(resultSet.getString("systemname"), new JSONObject(coordis));
+                }
+            }
+            return coords;
         } catch (final Exception e) {
             e.printStackTrace();
         }

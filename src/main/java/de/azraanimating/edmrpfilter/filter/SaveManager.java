@@ -18,6 +18,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SaveManager {
 
@@ -46,12 +47,15 @@ public class SaveManager {
                     this.cacheManager.addSystemToCache(systemName);
                 }
 
+                final HashMap<String, Integer> materialMap = new HashMap<>();
                 data.forEach(jsonObject -> {
                     try {
                         this.mySQLHandler.setStationRessourcePrice(jsonObject.getString("name"), jsonObject.getInt("sellPrice"), stationName);
+                        materialMap.put(jsonObject.getString("name"), jsonObject.getInt("sellPrice"));
                     } catch (final JSONException e) {
                         e.printStackTrace();
                     }
+                    this.cacheManager.cacheStationRessource(systemName, stationName, materialMap);
                 });
                 this.cacheManager.addSystemWithStationToCache(stationName, systemName);
                 System.out.println("Updated Data for '" + stationName + "' in '" + systemName + "' in Cache & Database");
@@ -59,16 +63,18 @@ public class SaveManager {
             this.cacheManager.addSystemWithStationToCache(stationName, systemName);
         } else {
             final String stationData = this.mySQLHandler.getStationData(stationName);
-            
+
             this.cacheManager.addSystemWithStationToCache(stationName, systemName);
 
             if (stationData == null) {
 
                 final ArrayList<String> materialList = new ArrayList<>();
+                final HashMap<String, Integer> materialMap = new HashMap<>();
 
                 data.forEach(jsonObject -> {
                     try {
                         materialList.add(jsonObject.getString("name") + "-" + jsonObject.getInt("sellPrice"));
+                        materialMap.put(jsonObject.getString("name"), jsonObject.getInt("sellPrice"));
                     } catch (final JSONException e) {
                         e.printStackTrace();
                     }
@@ -78,6 +84,7 @@ public class SaveManager {
 
                 this.mySQLHandler.addStation(stationName, systemName, this.getSystemCoordinates(systemName), data.toString(), timestamp, materials);
                 this.cacheManager.addSystemWithStationToCache(stationName, systemName);
+                this.cacheManager.cacheStationRessource(systemName, stationName, materialMap);
                 System.out.println("Saved new Data for '" + stationName + "' in '" + systemName + "' to Database <- Indexed");
                 if (!this.cacheManager.isSystemChached(systemName)) {
                     this.cacheManager.addSystemToCache(systemName);
@@ -98,19 +105,23 @@ public class SaveManager {
                     if (!this.cacheManager.isSystemChached(systemName)) {
                         this.cacheManager.addSystemToCache(systemName);
                     }
+                    final HashMap<String, Integer> materialMap = new HashMap<>();
                     data.forEach(jsonObject -> {
                         try {
                             this.mySQLHandler.setStationRessourcePrice(jsonObject.getString("name"), jsonObject.getInt("sellPrice"), stationName);
+                            materialMap.put(jsonObject.getString("name"), jsonObject.getInt("sellPrice"));
                         } catch (final JSONException e) {
                             e.printStackTrace();
                         }
                     });
+                    this.cacheManager.cacheStationRessource(systemName, stationName, materialMap);
                     this.cacheManager.addSystemWithStationToCache(stationName, systemName);
                     System.out.println("Updated Data for '" + stationName + "' in '" + systemName + "' in Cache & Database [1. Entry to Cache]");
                 }
             }
         }
     }
+
 
     private String getSystemCoordinates(final String systemName) throws JSONException, IOException {
         final OkHttpClient client = new OkHttpClient().newBuilder()
