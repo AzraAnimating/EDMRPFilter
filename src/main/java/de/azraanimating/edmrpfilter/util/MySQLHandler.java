@@ -25,9 +25,9 @@ public class MySQLHandler {
         this.searchedRessources = searchedRessources;
     }
 
-    public MySQL connectToMysql(final String hostname, final int port, final String database, final String user, final String password) {
+    public MySQL connectToMysql(final String hostname, final int port, final String database, final String user, final String password) throws SQLException {
         final MySQL mySQL = new MySQL(hostname, port, user, password, database);
-        MySQL.using(mySQL);
+        mySQL.openConnection();
         this.mySQL = mySQL;
 
         System.out.println("MySQL Connected");

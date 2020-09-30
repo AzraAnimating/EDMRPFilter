@@ -17,6 +17,7 @@ import de.azraanimating.edmrpfilter.util.MySQLHandler;
 import org.simpleyaml.exceptions.InvalidConfigurationException;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 public class EliteDangerousMiningRoutePlanner {
@@ -26,7 +27,7 @@ public class EliteDangerousMiningRoutePlanner {
     private final CacheManager cacheManager;
     public static List<String> searchedMaterials;
 
-    public EliteDangerousMiningRoutePlanner() throws InvalidConfigurationException, IOException {
+    public EliteDangerousMiningRoutePlanner() throws InvalidConfigurationException, IOException, SQLException {
         this.mySQLHandler = new MySQLHandler();
 
         final ConfigReader configReader = new ConfigReader();

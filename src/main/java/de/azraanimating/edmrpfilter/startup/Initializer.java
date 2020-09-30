@@ -11,6 +11,7 @@ import de.azraanimating.edmrpfilter.main.EliteDangerousMiningRoutePlanner;
 import org.simpleyaml.exceptions.InvalidConfigurationException;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class Initializer {
 
@@ -18,9 +19,7 @@ public class Initializer {
 
         try {
             final EliteDangerousMiningRoutePlanner eliteDangerousMiningRoutePlanner = new EliteDangerousMiningRoutePlanner();
-        } catch (final InvalidConfigurationException e) {
-            e.printStackTrace();
-        } catch (final IOException e) {
+        } catch (final InvalidConfigurationException | SQLException | IOException e) {
             e.printStackTrace();
         }
 
