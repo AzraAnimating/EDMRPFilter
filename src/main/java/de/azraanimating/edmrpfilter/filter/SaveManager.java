@@ -43,7 +43,7 @@ public class SaveManager {
                         System.out.println("Refreshed System Data for Fleetcarrier '" + stationName + "'");
                     }
                 }
-                if (!this.cacheManager.isSystemChached(systemName)) {
+                if (!this.cacheManager.isSystemCached(systemName)) {
                     this.cacheManager.addSystemToCache(systemName);
                 }
 
@@ -86,7 +86,7 @@ public class SaveManager {
                 this.cacheManager.addSystemWithStationToCache(stationName, systemName);
                 this.cacheManager.cacheStationRessource(systemName, stationName, materialMap);
                 System.out.println("Saved new Data for '" + stationName + "' in '" + systemName + "' to Database <- Indexed");
-                if (!this.cacheManager.isSystemChached(systemName)) {
+                if (!this.cacheManager.isSystemCached(systemName)) {
                     this.cacheManager.addSystemToCache(systemName);
                 }
             } else {
@@ -102,7 +102,7 @@ public class SaveManager {
                             System.out.println("Refreshed System Data for Fleetcarrier '" + stationName + "'");
                         }
                     }
-                    if (!this.cacheManager.isSystemChached(systemName)) {
+                    if (!this.cacheManager.isSystemCached(systemName)) {
                         this.cacheManager.addSystemToCache(systemName);
                     }
                     final HashMap<String, Integer> materialMap = new HashMap<>();

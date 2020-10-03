@@ -30,7 +30,7 @@ public class CacheManager {
 
     public void loadStationsWithSystemsIntoCache() {
         this.stationSystems = RestApiController.mySQLHandler.getAllStationsWithSystems();
-        System.out.println(this.stationSystems.size());
+        System.out.println(this.stationSystems.size() + " indexed Values");
     }
 
     public void loadRessourcesWithSystemsIntoCache(final List<String> ressources) {
@@ -48,7 +48,7 @@ public class CacheManager {
         System.out.println("Cached " + j.get() + " total");
     }
 
-    public boolean isSystemChached(final String system) {
+    public boolean isSystemCached(final String system) {
         return this.systems.contains(system);
     }
 

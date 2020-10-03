@@ -137,7 +137,7 @@ public class RestApiController {
 
         final ArrayList<String> sortedSystems = this.flip(this.sortIntegers(pricingWithSystems));
 
-        for (int i = 0; i < Math.round(sortedSystems.size() * 0.15); i++) {
+        for (int i = 0; i < Math.round(sortedSystems.size() * 0.1); i++) {
             try {
                 final JSONObject coordinates = RestApiController.cacheManager.getCoordinates(sortedSystems.get(i).split("#")[0]);
                 if (coordinates != null) {
@@ -152,6 +152,41 @@ public class RestApiController {
     }
 
 
+    @GetMapping("/edmrp/v1/bestprice/")
+    @ResponseBody
+    public ResponseEntity<String> getBestPrice(@RequestParam final String ressource) {
+
+        final HashMap<String, HashMap<String, HashMap<String, Integer>>> materialInfo = RestApiController.cacheManager.getMaterialInfo();
+        final HashMap<String, Integer> pricingWithSystems = new HashMap<>();
+        final ArrayList<String> assembledReturnData = new ArrayList<>();
+
+        materialInfo.forEach((systemname, stations) -> {
+            final AtomicInteger highestPrice = new AtomicInteger();
+            final AtomicReference<String> namesWithHighestPrice = new AtomicReference<>("");
+            stations.forEach((stationName, ressources) -> {
+                namesWithHighestPrice.set("");
+                if (ressources.get(ressource) != null) {
+                    if (ressources.get(ressource) > highestPrice.get()) {
+                        highestPrice.set(ressources.get(ressource));
+                        namesWithHighestPrice.set("\"systemname\" : \"" + systemname + "\" , \"stationname\" : \"" + stationName + "\" , ");
+                    }
+                }
+            });
+            if (highestPrice.get() > 0) {
+                pricingWithSystems.put(namesWithHighestPrice.get(), highestPrice.get());
+            }
+        });
+
+        final ArrayList<String> sortedSystems = this.flip(this.sortIntegers(pricingWithSystems));
+
+        for (int i = 0; i < Math.round(sortedSystems.size() * 0.1); i++) {
+            assembledReturnData.add("{ " + sortedSystems.get(i) + " }");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body("{ \"prices\" : " + assembledReturnData.toString() + " }");
+    }
+
+
     private HashMap<String, Integer> sort(final HashMap<String, Integer> listToSort) {
 
         return listToSort.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
@@ -159,6 +194,27 @@ public class RestApiController {
     }
 
     private ArrayList<String> sortIntegers(final HashMap<String, Integer> listToSort) {
+        final Set set = listToSort.entrySet();
+        final Iterator iterator = set.iterator();
+
+        while (iterator.hasNext()) {
+            final Map.Entry mapEntry = (Map.Entry) iterator.next();
+        }
+
+        final Map<Integer, String> map = RestApiController.sortByValues(listToSort);
+        final Set set2 = map.entrySet();
+        final Iterator iterator2 = set2.iterator();
+        final ArrayList<String> finalList = new ArrayList<>();
+        while (iterator2.hasNext()) {
+            final Map.Entry me2 = (Map.Entry) iterator2.next();
+            if (!me2.getValue().equals("0")) {
+                finalList.add(me2.getKey() + "\"price\" : " + me2.getValue());
+            }
+        }
+        return finalList;
+    }
+
+    private ArrayList<String> sortIntegersForJsonReturn(final HashMap<String, Integer> listToSort) {
         final Set set = listToSort.entrySet();
         final Iterator iterator = set.iterator();
 
@@ -205,6 +261,4 @@ public class RestApiController {
         }
         return sortedHashMap;
     }
-
-
 }
